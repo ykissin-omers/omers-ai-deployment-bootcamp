@@ -10,12 +10,17 @@ export ENDPOINT_ID=$(gcloud compute instances describe $INSTANCE_NAME --format='
 export MODEL_NAME=$(gcloud compute instances describe $INSTANCE_NAME --format='value[](metadata.items.model)' --zone=$ZONE)
 export ENV=$(gcloud compute instances describe $INSTANCE_NAME --format='value[](metadata.items.env)' --zone=$ZONE)
 
+echo $ENDPOINT_ID
+
 gcloud storage cp "gs://${PROJECT_ID}-${ENV}-api-source/ml-api.zip" ./
 unzip ml-api.zip -d ./ml-api
 cd ml-api
+echo "######     creating env"
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
+echo "######     creating firewall rule"
 sudo ufw allow 8080/tcp
+echo "######     initialize FastAPI"
 fastapi run main.py --port 8080 >> ml-api.log 2>&1 &
